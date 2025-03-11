@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Tarefas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Gerenciador de Tarefas</h1>
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Adicionar/Editar Tarefa</h5>
+                <form id="taskForm">
+                    <input type="hidden" id="taskId">
+                    <div class="mb-3">
+                        <label for="taskTitle" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="taskTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskDescription" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="taskDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taskStatus" class="form-label">Status</label>
+                        <select class="form-select" id="taskStatus" required>
+                            <option value="pendente">Pendente</option>
+                            <option value="concluída">Concluída</option>
+                            <option value="reabrir">Reabrir</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Lista de Tarefas</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Descrição</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            loadTasks();
+            $('#taskForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const taskId = $('#taskId').val();
+                const taskTitle = $('#taskTitle').val().trim();
+                const taskDescription = $('#taskDescription').val().trim();
+                const taskStatus = $('#taskStatus').val();
+
+                if (!taskTitle || !taskDescription || !taskStatus) {
+                    alert('Por favor, preencha todos os campos.');
+                    return;
+                }
+
+                const taskData = {
+                    title: taskTitle,
+                    description: taskDescription,
+                    status: taskStatus
+                };
+
+                if (taskId) {
+                    updateTask(taskId, taskData);
+                } else {
+                    createTask(taskData);
+                }
+            });
+        });
+
+        function loadTasks() {
+            $.ajax({
+                url: 'tasks',
+                method: 'GET',
+                success: function (response) {
+                    let data = JSON.parse(response);
+                    const tasks = data.tasks;
+                    $('#taskTableBody').empty();
+                    tasks.forEach(task => {
+                        const row = `
+                            <tr>
+                                <td>${task.title}</td>
+                                <td>${task.description}</td>
+                                <td>${task.status}</td>
+                                <td>
+                                    <button class="btn btn-success btn-action" onclick="toggleTaskStatus(${task.id}, '${task.status}')">
+                                        ${task.status === 'pendente' ? 'Concluir' : 'Reabrir'}
+                                    </button>
+                                    <button class="btn btn-warning btn-action" onclick="editTask(${task.id})">Editar</button>
+                                    <button class="btn btn-danger btn-action" onclick="deleteTask(${task.id})">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+                        $('#taskTableBody').append(row);
+                    });
+                },
+                error: function (error) {
+                    console.error('Erro ao carregar tarefas:', error);
+                }
+            });
+        }
+
+        function createTask(taskData) {
+            $.ajax({
+                url: 'tasks',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(taskData),
+                success: function () {
+                    loadTasks();
+                    alert('Tarefa criada com sucesso!');
+                },
+                error: function (error) {
+                    console.error('Erro ao criar tarefa:', error);
+                    alert('Erro ao criar tarefa. Verifique o console para mais detalhes.');
+                }
+            });
+        }
+
+        function updateTask(taskId, taskData) {
+            $.ajax({
+                url: `tasks/${taskId}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(taskData),
+                success: function () {
+                    loadTasks();
+                    alert('Tarefa atualizada com sucesso!');
+                },
+                error: function (error) {
+                    console.error('Erro ao editar tarefa:', error);
+                    alert('Erro ao editar tarefa. Verifique o console para mais detalhes.');
+                }
+            });
+        }
+
+        function toggleTaskStatus(taskId, currentStatus) {
+            const newStatus = currentStatus === 'pendente' ? 'concluída' : 'pendente';
+            $.ajax({
+                url: `tasks/${taskId}`,
+                method: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify({status: newStatus }),
+                success: function (data) {
+                    console.log(data);
+                    
+                    loadTasks();
+                    alert('Status da tarefa atualizado com sucesso!');
+                },
+                error: function (error) {
+                    console.error('Erro ao alterar status da tarefa:', error);
+                    alert('Erro ao alterar status da tarefa. Verifique o console para mais detalhes.');
+                }
+            });
+        }
+
+        function deleteTask(taskId) {
+            if (confirm('Tem certeza que deseja excluir esta tarefa?')) {
+                $.ajax({
+                    url: `tasks/${taskId}`,
+                    method: 'DELETE',
+                    success: function () {
+                        loadTasks();
+                        alert('Tarefa excluída com sucesso!');
+                    },
+                    error: function (error) {
+                        console.error('Erro ao excluir tarefa:', error);
+                        alert('Erro ao excluir tarefa. Verifique o console para mais detalhes.');
+                    }
+                });
+            }
+        }
+
+        function editTask(taskId) {
+            $.ajax({
+                url: `tasks/${taskId}`,
+                method: 'GET',
+                success: function (task) {
+                    const data = JSON.parse(task);
+                    $('#taskId').val(data.task.id);
+                    $('#taskTitle').val(data.task.title);
+                    $('#taskDescription').val(data.task.description);
+                    $('#taskStatus').val(data.task.status);
+                },
+                error: function (error) {
+                    console.error('Erro ao carregar tarefa para edição:', error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

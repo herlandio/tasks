@@ -1,0 +1,19 @@
+{
+    "name": "herlandio7/tasks",
+    "description": "Task Registration System",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "Config\\": "config/",
+            "Models\\": "models/",
+            "Routes\\": "routes/",  
+            "Repositories\\": "repositories/",
+            "Services\\": "services/",
+            "Controllers\\": "controllers/"
+        }
+    },
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*"
+    }
+}
