@@ -67,7 +67,11 @@ class TaskRepository {
             $stmt = $this->connection->prepare($sql);
 
             $task = $this->find($id);
-            
+
+            if (!$task) {
+                throw new Exception("Task with ID $id not found.");
+            }
+
             $stmt->execute([
                 'id' => $id,
                 'title' => $data['title'] ?? $task['title'],
@@ -76,10 +80,10 @@ class TaskRepository {
             ]);
 
             if ($stmt->rowCount() === 0) {
-                throw new Exception("No task was updated. Task with ID $id may not exist.");
+                throw new Exception("No task was deleted. Task with ID $id may not exist.");
             }
         } catch (Exception $e) {
-            throw new Exception("Failed to update task in database: " . $e->getMessage());
+            throw new Exception("Failed to delete task from database: " . $e->getMessage());
         }
     }
 

@@ -79,6 +79,15 @@ class TaskController
     {
         try {
             $data = json_decode(file_get_contents("php://input"), true);
+
+            $requiredFields = ['title', 'description', 'status'];
+            foreach ($requiredFields as $field) {
+                if (empty($data[$field])) {
+                    http_response_code(400);
+                    throw new Exception("The field '$field' is required.");
+                }
+            }
+            
             $task = $this->service->update($id, $data);
             
             http_response_code(200);
@@ -122,6 +131,28 @@ class TaskController
         } catch (Exception $e) {
             http_response_code(500);
             echo json_encode(["error" => $e->getMessage()]);
+        }
+    }
+
+    public function updateStatus(int $id): void
+    {
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            $status = $data['status'];
+
+            if (!$status) {
+                http_response_code(400);
+                echo json_encode(['error' => 'The field "status" is required.']);
+                return;
+            }
+
+            $this->service->updateTaskStatus($id, $status);
+
+            http_response_code(200);
+            echo json_encode(['message' => 'Status updated with success!']);
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }

@@ -98,4 +98,23 @@ class TaskService {
             throw new Exception("Failed to get by id task: " . $e->getMessage());
         }
     }
+
+    public function updateTaskStatus(int $id, string $status): void
+    {
+        if (!in_array($status, ['pendente', 'concluída'])) {
+            throw new Exception("Status invalid");
+        }
+
+        $task = $this->repository->find($id);
+
+        if (!$task) {
+            throw new Exception("Task with ID $id not found.");
+        }
+
+        $this->repository->update($id, [
+            'title' => $task['title'],
+            'description' => $task['description'],
+            'status' => $status
+        ]);
+    }
 }

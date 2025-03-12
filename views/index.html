@@ -27,7 +27,6 @@
                         <select class="form-select" id="taskStatus" required>
                             <option value="pendente">Pendente</option>
                             <option value="concluída">Concluída</option>
-                            <option value="reabrir">Reabrir</option>
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Salvar</button>
@@ -154,13 +153,11 @@
         function toggleTaskStatus(taskId, currentStatus) {
             const newStatus = currentStatus === 'pendente' ? 'concluída' : 'pendente';
             $.ajax({
-                url: `tasks/${taskId}`,
+                url: `tasks/status/${taskId}`,
                 method: 'PUT',
                 contentType: 'application/json',
-                data: JSON.stringify({status: newStatus }),
+                data: JSON.stringify({ status: newStatus }),
                 success: function (data) {
-                    console.log(data);
-                    
                     loadTasks();
                     alert('Status da tarefa atualizado com sucesso!');
                 },
